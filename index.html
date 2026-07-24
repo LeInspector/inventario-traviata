@@ -152,7 +152,9 @@ function parHint(nombre){ // separa "(...)" final como pista
 }
 
 function render(){
-  const cont=document.getElementById('lista'); cont.innerHTML='';
+  const cont=document.getElementById('lista');
+  const abiertos=new Set([...cont.querySelectorAll('details.prov[open]')].map(d=>d.dataset.prov));
+  cont.innerHTML='';
   const q=filtro.trim().toLowerCase();
   let visibles=0;
   INV.forEach((prov)=>{
@@ -164,8 +166,8 @@ function render(){
     visibles++;
     const hechos=contados(prov), tot=prov.items.length;
     const cls=hechos===0?'':(hechos>=tot?'full':'parc');
-    const abrir = (q||soloPend)?'open':'';
-    const det=document.createElement('details'); det.className='prov'; if(abrir) det.open=true;
+    const abrir = (q||soloPend||abiertos.has(prov.name))?'open':'';
+    const det=document.createElement('details'); det.className='prov'; det.dataset.prov=prov.name; if(abrir) det.open=true;
     det.innerHTML=`<summary>
         <span class="nom">${prov.name}</span>
         <span class="badge ${cls}">${hechos}/${tot}</span>
@@ -187,10 +189,9 @@ function render(){
       const inp=row.querySelector('input');
       inp.addEventListener('input',()=>{setVal(k,inp.value,row);});
       row.querySelector('[data-a="menos"]').addEventListener('click',()=>{
-        inp.value=Math.max(0,(parseInt(inp.value||'0',10)||0)-1); setVal(k,inp.value,row); refreshBadges();});
+        inp.value=Math.max(0,(parseInt(inp.value||'0',10)||0)-1); setVal(k,inp.value,row);});
       row.querySelector('[data-a="mas"]').addEventListener('click',()=>{
-        inp.value=(parseInt(inp.value||'0',10)||0)+1; setVal(k,inp.value,row); refreshBadges();});
-      inp.addEventListener('blur',refreshBadges);
+        inp.value=(parseInt(inp.value||'0',10)||0)+1; setVal(k,inp.value,row);});
       box.appendChild(row);
     });
     cont.appendChild(det);
@@ -202,11 +203,16 @@ function setVal(k,v,row){
   v=(v||'').trim();
   if(v==='') delete counts[k]; else counts[k]=v;
   if(row) row.classList.toggle('hecho', v!=='');
+  actualizarBadge(k.split('||')[0]);
   guardar(); progreso();
 }
-function refreshBadges(){ // recalcula badges sin re-render completo
-  document.querySelectorAll('.prov').forEach((det,i)=>{});
-  render();
+function actualizarBadge(provName){ // actualiza solo el badge de ese proveedor, sin re-render
+  const prov=INV.find(p=>p.name===provName); if(!prov) return;
+  const det=document.querySelector(`details.prov[data-prov="${CSS.escape(provName)}"]`); if(!det) return;
+  const b=det.querySelector('.badge'); if(!b) return;
+  const hechos=contados(prov), tot=prov.items.length;
+  b.textContent=`${hechos}/${tot}`;
+  b.className='badge '+(hechos===0?'':(hechos>=tot?'full':'parc'));
 }
 function progreso(){
   const c=totalContados(), t=totalItems();
