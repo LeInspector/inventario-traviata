@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#c0392b">
+<title>Inventario · La Traviata</title>
+<style>
+  :root{
+    --rojo:#c0392b; --rojo-osc:#a52f22; --verde:#1e8449; --amber:#b9770e;
+    --bg:#f4f2ee; --card:#ffffff; --linea:#e4e0d8; --txt:#20242a; --mut:#6b7280;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg); color:var(--txt); font-size:17px; padding-bottom:90px}
+  header{position:sticky; top:0; z-index:20; background:var(--rojo);
+    color:#fff; padding:10px 14px 12px; box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .htop{display:flex; align-items:center; gap:10px}
+  .htop h1{font-size:19px; margin:0; font-weight:700; letter-spacing:.2px; flex:1}
+  .htop .fecha{background:rgba(255,255,255,.16); border:0; color:#fff;
+    border-radius:8px; padding:7px 9px; font-size:15px}
+  .prog{margin-top:9px}
+  .barra{height:8px; background:rgba(255,255,255,.25); border-radius:99px; overflow:hidden}
+  .barra > i{display:block; height:100%; width:0; background:#fff; transition:width .25s}
+  .prog small{display:block; margin-top:4px; font-size:12.5px; opacity:.92}
+  .tools{position:sticky; top:0; z-index:10; display:flex; gap:8px; padding:10px 12px;
+    background:var(--bg); border-bottom:1px solid var(--linea); flex-wrap:wrap}
+  .buscar{flex:1; min-width:140px; display:flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--linea); border-radius:10px; padding:9px 11px}
+  .buscar input{border:0; outline:0; flex:1; font-size:16px; background:transparent}
+  .chip{background:var(--card); border:1px solid var(--linea); border-radius:10px;
+    padding:9px 12px; font-size:14px; cursor:pointer; white-space:nowrap}
+  .chip.on{background:var(--rojo); color:#fff; border-color:var(--rojo)}
+  main{padding:10px 12px 4px}
+  .prov{background:var(--card); border:1px solid var(--linea); border-radius:14px;
+    margin-bottom:11px; overflow:hidden}
+  .prov > summary{list-style:none; cursor:pointer; padding:14px 15px;
+    display:flex; align-items:center; gap:11px; user-select:none}
+  .prov > summary::-webkit-details-marker{display:none}
+  .prov .nom{flex:1; font-weight:700; font-size:16.5px}
+  .prov .fl{font-size:13px; color:var(--mut); transition:transform .2s}
+  .prov[open] .fl{transform:rotate(90deg)}
+  .badge{font-size:13px; font-weight:700; padding:4px 10px; border-radius:99px;
+    background:#eef0f2; color:var(--mut); min-width:52px; text-align:center}
+  .badge.parc{background:#fff4e0; color:var(--amber)}
+  .badge.full{background:#e3f5ea; color:var(--verde)}
+  .items{border-top:1px solid var(--linea)}
+  .item{display:flex; align-items:center; gap:12px; padding:11px 15px; border-top:1px solid #f0ede7}
+  .item:first-child{border-top:0}
+  .item .pn{flex:1; line-height:1.25}
+  .item .pn b{font-weight:600}
+  .item .pn .par{color:var(--mut); font-size:12.5px; margin-left:5px}
+  .item.hecho{background:#f6fbf7}
+  .stepper{display:flex; align-items:center; gap:0; background:#f2f0eb;
+    border-radius:11px; padding:3px}
+  .stepper button{width:40px; height:40px; border:0; background:#fff; border-radius:9px;
+    font-size:22px; font-weight:700; color:var(--rojo); cursor:pointer; line-height:1;
+    box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .stepper button:active{transform:scale(.94)}
+  .stepper input{width:56px; height:40px; border:0; background:transparent; text-align:center;
+    font-size:18px; font-weight:700; outline:0}
+  .stepper input::placeholder{color:#c3c0b8; font-weight:400}
+  .vacio{text-align:center; color:var(--mut); padding:40px 20px}
+  footer{position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex; gap:8px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:#fff;
+    border-top:1px solid var(--linea); box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+  .btn{flex:1; border:0; border-radius:12px; padding:14px 8px; font-size:15px; font-weight:700;
+    cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px}
+  .btn .ic{font-size:19px}
+  .btn.prim{background:var(--rojo); color:#fff}
+  .btn.sec{background:#eef0f2; color:var(--txt)}
+  .btn:active{transform:translateY(1px)}
+  .toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+    background:#20242a; color:#fff; padding:12px 18px; border-radius:12px; font-size:15px;
+    max-width:90%; text-align:center; opacity:0; pointer-events:none; transition:.25s; z-index:50}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast a{color:#8ecaff}
+  @media(min-width:820px){ main{max-width:760px;margin:0 auto} }
+</style>
+</head>
+<body>
+<header>
+  <div class="htop">
+    <h1>Inventario · La Traviata</h1>
+    <input type="date" id="fecha" class="fecha">
+    <button id="cfg" class="fecha" title="Configurar subida a Drive" style="font-size:18px">⚙</button>
+  </div>
+  <div class="prog">
+    <div class="barra"><i id="bar"></i></div>
+    <small id="progTxt">0 de 0 productos contados</small>
+  </div>
+</header>
+
+<div class="tools">
+  <label class="buscar">🔎 <input id="q" placeholder="Buscar producto o proveedor…"></label>
+  <button class="chip" id="soloPend">Solo pendientes</button>
+</div>
+
+<main id="lista"></main>
+
+<footer>
+  <button class="btn sec" id="bCSV"><span class="ic">⬇️</span>Exportar</button>
+  <button class="btn sec" id="bShare"><span class="ic">📤</span>Compartir</button>
+  <button class="btn prim" id="bDrive"><span class="ic">☁️</span>Subir a Drive</button>
+  <button class="btn sec" id="bReset"><span class="ic">🗑️</span>Vaciar</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const INV = [{"name": "VARIOS", "items": ["Pierna Pollo", "Verdura para ternasco", "Plátanos", "Langostinos", "Tiramisú", "Lasaña Carne", "Lasaña Espinacas", "Tomate Marinera", "Alubias", "Chili", "Cheddar nachos", "Sepia bolsitas bocadillo", "Ternasco", "Espinacas hechas bolsitas", "Cebolla frita bolsitas", "Tomate Marinera bolsitas", "Bolsas marinera", "Marinera hecha bolsitas individuales"]}, {"name": "CONSUMIBLES", "items": ["Rollos tiquete impresora", "Rollos tiquete visa", "Bloc pedidos casa", "Bloc pedidos recoger", "Grapas 22/6", "Rotulador cocina", "Rotulador pizza", "Bolis", "Celo", "Etiquetas griego", "Etiquetas bocadillo", "Folletos propaganda", "Folletos propaganda SG", "Bolsas 35 x 50", "Bolsas 40 x 60", "Bolsas congelar", "Rollo bolsa masa"]}, {"name": "ITALIA", "items": ["Cajas 32", "Cajas 24", "Tapas cartón", "Bolsas Papel Pizza", "Bolsas Papel Coca", "Bolsas Papel Asas"]}, {"name": "CANO", "items": ["Pan Hamburguesa 12 cm 90 grs", "Pan Crostone Cuadrado", "Pan Hot - Dog"]}, {"name": "SG", "items": ["Rosquillas", "Pan Sarraceno", "Pan Avena", "Pan Quinoa", "Atún", "Alcachofas", "Rovellones", "Anchoas", "Sacos Harina Arroz SG", "Bases Pizza", "Fartons", "Bizcocho chocolate", "Bizcocho pasas y nueces", "Bocadillos quinoa", "Tomate", "York", "Maasdam", "Roque", "Bola", "Brie", "Frankfurt"]}, {"name": "SACOS HARINA", "items": ["HARINA ESPELTA", "HARINA DE ARROZ"]}, {"name": "CARNICERO", "items": ["Hamburguesas 150 grs Tern/Cerd (4)", "Callos (0)", "Canelones (0)"]}, {"name": "CONSUM", "items": ["Tabasco (10)", "Espaguetis Pasta Fresca (4)"]}, {"name": "DIMARSES SERHS DISTRIBUCIÓ", "items": ["Coca Cola Lata (2x24)", "Coca Cola 1/2 Zero (12)", "Coca Cola 1L (2x12)", "Estrella Damm Lata (1x24)", "Xibeca 1L (2x6)", "Agua 1 1/2 L (2x12)", "Agua 33 cl (1x33)", "Papel Mecha (4)", "Mayonesa (20)", "Tomate Triturado 1 x 3 (7)", "Lavavajilla lavaplatos (1)", "Sal granada Lavaplatos (2)", "Abrillantador lavaplatos (1)", "Sobres Ketchup (1/3)", "Sobres Mostaza (1/3)", "Sobres Sal (1/3)", "Sobres Aceite-Vinagre (1/3)", "Salsa Barbacoa 1 x 6 (2)", "Nuez Moscada Molida (1/3)", "Pimienta Negra Molida (1/3)", "Hierbas Provenzales (1/3)", "curry", "Aceite Mágnum 25 L (1)", "Alcachofas trozos 1 x 6 (2)", "Papel Seda (coca) (4 paq)", "Ttopos (nachos) (3)", "Fanta Naranja Lata (1x24)", "Fanta Limon Lata (1x24)", "Aquarius Limon (1x24)", "Aquarius Naranja (1x24)", "Vasos papel"]}, {"name": "ROMERO FOODS", "items": ["Campesina (1/2)", "Patatas Gajo sin Piel Bravas (5)", "Croquetas Cocido (1bolsa)", "Nuguets (2)", "Alitas de pollo (2)", "Xili pepers (bombas mejicanas) (3)", "Aros de Cebolla (1)", "Crujiente de pollo (2)", "Sepia / Choco Mongo (2)", "Gamba Pelada (2)", "Calamar Tubo (1/3)", "Frankfurt (4)", "Beicon Campofrio (5)", "Magnum Almendrado", "Magnum Blanco", "Magnum Frac", "Magnum Doble Chocolate", "Patatas fritas Griego Caterpak (2)", "Patatas fritas Sury (2)"]}, {"name": "PESCA ADELL", "items": ["Aros Cebolla (1)", "Mejillón Molla (1)", "Croquetas Cocido", "Calamar Romana (0)", "Tubo Calamar (1/3)", "Patatas Fritas (2)", "Patatas Gajo sin piel (bravas)"]}, {"name": "TGT LACTEOS TARRAGONA", "items": ["Mozzarella Pizzafonte (48) cada caixa porta 4kg", "Bergader Roquefort Barra (1/3)", "Nata Oldenburguer 35% (6)", "Q Barra (2)", "Mozzarella Pura (2)", "Salsa Xedar (2)"]}, {"name": "PROFESIONALES DE LA CARNE", "items": ["Carne Griego", "Adobo (2)", "Pollo (10)", "Picada Ternera", "Baldanes Butifarra (1/3)", "Salchichas (1/3)", "Sobrasada Mercadona (1/3)", "Paletilla Cordero 1 cuixa de kg en 3 trosos de 330g (0)", "Caña Lomo (3 boc)", "Costillas (0)", "Pollo Crudo"]}, {"name": "PEPSI DRINKS LEVANTE", "items": ["Pepsi Lata (24)", "KN Lata (12)", "KL Lata (12)", "Chedar Amarillo (1/2)", "York (4)", "Salsa Cheddar (2)", "Beicon (5)", "Agua 33cl", "Agua Litro y medio (2X12)", "San Miguel 1 L", "Scamorza", "Cuanciale", "Curry (1/3)"]}, {"name": "SALOM", "items": ["Salmon económico (1KG)", "Brie (1/2)", "Maasdam entero (-1/2)", "Q bola (2)", "Orégano (1/3)", "Atún económico (3)", "Gorgonsola (2 trozos)", "Parmesano (1/3)", "Salami (0)", "Serrano (1/3)", "Mozzarella Pizzafonte (40)", "Fiochi Queso y Pero (1/3)", "Nata 35 % (6)"]}, {"name": "VERDURA", "items": ["Champis (1)", "Tomate", "Pimiento Rojo", "Pimiento Verde", "Cebolla Gorda Seca", "Patatas", "Lechuga", "Olivas negras Aragon", "Olivas verdes sin hueso", "Berenjena (0)", "Calabacín (0)", "Verdura para carne", "SG verdura para carne", "Apio", "Perejil", "Zanahoria", "Ajos"]}, {"name": "GM PUNTO CASH", "items": ["Lambrusco Rosado", "Lambrusco Tinto", "Anchoas (1/2)", "Bolsa Papel Patatas Fritas", "Bolsa Plastico 35x50", "Bolsa Plastica 50x60", "Bolsas congelación", "Tortellini Espinacas", "Tortellini Carne", "Azucar Glass", "Maizena"]}, {"name": "MERCADONA VIERNES", "items": ["Bimbo", "Cherry", "Colores", "Mango", "Aguacate", "Manzana", "Q Cabra", "Bufala", "Ñoquis", "Coñac", "Espaguetis (Consum)", "Cebolla Roja", "Hoja Roble para Hamburg", "Cubitos Caldo Pollo - Verdura", "Espinacas", "Iceberg SG", "Pepino", "Nutella (2)"]}, {"name": "QUIM", "items": ["Papel Rollo Aluminio", "1500", "750", "500", "375 microondas", "250", "80 (1/3)", "Bases Redondas SG", "Burritos", "Lasaña (2)", "Nachos", "Hortelana", "375 Frio Postre", "Bolsas Mex", "Bolsas Gr.", "Cartón Patatas", "Cartón Pasta (1)"]}, {"name": "BOLSAS ENVASES", "items": ["Danes", "Ternasco", "Hamb y Burrito"]}];
+const TOKEN = 'Kpd4f6bBOrCQp06rigNRYC8v';   // debe coincidir con el del Apps Script
+
+/* ---------- IndexedDB mínima ---------- */
+const DB_NAME='traviata-inv', STORE='estado';
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore(STORE);
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+async function dbGet(k){const db=await idb();return new Promise((res)=>{const t=db.transaction(STORE);
+  const rq=t.objectStore(STORE).get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(null);});}
+async function dbSet(k,v){const db=await idb();return new Promise((res)=>{const t=db.transaction(STORE,'readwrite');
+  t.objectStore(STORE).put(v,k); t.oncomplete=()=>res(); t.onerror=()=>res();});}
+
+/* ---------- Estado ---------- */
+let counts={};           // clave "prov||producto" -> string
+let soloPend=false, filtro='';
+const key=(p,it)=>p+'||'+it;
+const hoy=()=>new Date().toISOString().slice(0,10);
+
+async function cargar(){
+  const st=await dbGet('current');
+  if(st){counts=st.counts||{}; document.getElementById('fecha').value=st.fecha||hoy();}
+  else{document.getElementById('fecha').value=hoy();}
+  render();
+}
+let tSave;
+function guardar(){clearTimeout(tSave); tSave=setTimeout(async()=>{
+  await dbSet('current',{fecha:document.getElementById('fecha').value,counts,ts:Date.now()});
+},350);}
+
+/* ---------- Render ---------- */
+function contados(prov){return prov.items.filter(it=>{const v=counts[key(prov.name,it)];return v!==undefined&&v!=='';}).length;}
+function totalContados(){return INV.reduce((a,p)=>a+contados(p),0);}
+function totalItems(){return INV.reduce((a,p)=>a+p.items.length,0);}
+
+function parHint(nombre){ // separa "(...)" final como pista
+  const m=nombre.match(/^(.*?)(\s*\([^)]*\))\s*$/);
+  return m? {n:m[1].trim(), par:m[2].trim()} : {n:nombre, par:''};
+}
+
+function render(){
+  const cont=document.getElementById('lista'); cont.innerHTML='';
+  const q=filtro.trim().toLowerCase();
+  let visibles=0;
+  INV.forEach((prov)=>{
+    const provMatch=prov.name.toLowerCase().includes(q);
+    let items=prov.items.map((it)=>({it,k:key(prov.name,it)}));
+    if(q) items=items.filter(x=>provMatch||x.it.toLowerCase().includes(q));
+    if(soloPend) items=items.filter(x=>{const v=counts[x.k];return v===undefined||v==='';});
+    if(items.length===0) return;
+    visibles++;
+    const hechos=contados(prov), tot=prov.items.length;
+    const cls=hechos===0?'':(hechos>=tot?'full':'parc');
+    const abrir = (q||soloPend)?'open':'';
+    const det=document.createElement('details'); det.className='prov'; if(abrir) det.open=true;
+    det.innerHTML=`<summary>
+        <span class="nom">${prov.name}</span>
+        <span class="badge ${cls}">${hechos}/${tot}</span>
+        <span class="fl">▶</span>
+      </summary>
+      <div class="items"></div>`;
+    const box=det.querySelector('.items');
+    items.forEach(({it,k})=>{
+      const val=counts[k]??'';
+      const {n,par}=parHint(it);
+      const row=document.createElement('div');
+      row.className='item'+(val!==''?' hecho':'');
+      row.innerHTML=`<div class="pn"><b>${n}</b>${par?`<span class="par">${par}</span>`:''}</div>
+        <div class="stepper">
+          <button data-a="menos">−</button>
+          <input inputmode="numeric" placeholder="—" value="${val}">
+          <button data-a="mas">＋</button>
+        </div>`;
+      const inp=row.querySelector('input');
+      inp.addEventListener('input',()=>{setVal(k,inp.value,row);});
+      row.querySelector('[data-a="menos"]').addEventListener('click',()=>{
+        inp.value=Math.max(0,(parseInt(inp.value||'0',10)||0)-1); setVal(k,inp.value,row); refreshBadges();});
+      row.querySelector('[data-a="mas"]').addEventListener('click',()=>{
+        inp.value=(parseInt(inp.value||'0',10)||0)+1; setVal(k,inp.value,row); refreshBadges();});
+      inp.addEventListener('blur',refreshBadges);
+      box.appendChild(row);
+    });
+    cont.appendChild(det);
+  });
+  if(visibles===0) cont.innerHTML='<div class="vacio">Sin resultados.</div>';
+  progreso();
+}
+function setVal(k,v,row){
+  v=(v||'').trim();
+  if(v==='') delete counts[k]; else counts[k]=v;
+  if(row) row.classList.toggle('hecho', v!=='');
+  guardar(); progreso();
+}
+function refreshBadges(){ // recalcula badges sin re-render completo
+  document.querySelectorAll('.prov').forEach((det,i)=>{});
+  render();
+}
+function progreso(){
+  const c=totalContados(), t=totalItems();
+  document.getElementById('bar').style.width=(t?Math.round(c/t*100):0)+'%';
+  document.getElementById('progTxt').textContent=`${c} de ${t} productos contados`;
+}
+
+/* ---------- Export CSV (formato ancho, igual que la hoja) ---------- */
+function csvCell(s){s=(s??'').toString(); return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+function buildCSV(){
+  const maxRows=Math.max(...INV.map(p=>p.items.length));
+  const filas=[];
+  filas.push(INV.flatMap(p=>[p.name,'']));                 // fila proveedores
+  filas.push(INV.flatMap(()=>['Producto','Unidades']));    // cabeceras
+  for(let r=0;r<maxRows;r++){
+    filas.push(INV.flatMap(p=>{
+      const it=p.items[r];
+      if(it===undefined) return ['',''];
+      return [it, counts[key(p.name,it)]??''];
+    }));
+  }
+  return '﻿'+filas.map(f=>f.map(csvCell).join(',')).join('\r\n');
+}
+function nombreArchivo(){return 'Inventario_'+(document.getElementById('fecha').value||hoy())+'.csv';}
+function descargar(){
+  const blob=new Blob([buildCSV()],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=nombreArchivo(); a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('Archivo descargado ✅');
+}
+async function compartir(){
+  const file=new File([buildCSV()],nombreArchivo(),{type:'text/csv'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'Inventario La Traviata'}); return;}catch(e){if(e.name==='AbortError')return;}
+  }
+  descargar();
+}
+
+/* ---------- Subir a Drive (vía Google Apps Script) ---------- */
+function driveURL(){return (localStorage.getItem('driveURL')||'').trim();}
+function pedirURL(){
+  const cur=driveURL();
+  const v=prompt('Pega la URL de la aplicación web de Apps Script (termina en /exec):', cur);
+  if(v===null) return;
+  localStorage.setItem('driveURL', v.trim());
+  toast(v.trim()? 'Destino de Drive guardado ✅' : 'URL borrada');
+}
+async function subirDrive(){
+  const url=driveURL();
+  if(!url){ toast('Falta configurar el destino (botón ⚙). Descargando en su lugar.', 4000);
+    setTimeout(pedirURL, 300); return descargar(); }
+  toast('Subiendo a Drive…', 8000);
+  try{
+    // text/plain evita el "preflight" CORS de Apps Script
+    const r=await fetch(url,{method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({token:TOKEN, fecha:document.getElementById('fecha').value, csv:buildCSV()})});
+    const j=await r.json().catch(()=>null);
+    if(j && j.ok){ toast('Subido a Drive ✅'+(j.link?` · <a href="${j.link}" target="_blank">abrir</a>`:''), 7000); }
+    else if(j && j.error){ throw new Error(j.error); }
+    else { toast('Enviado a Drive. Si no aparece, revisa el ⚙ o usa Compartir.', 6000); }
+  }catch(e){
+    toast('No se pudo subir ('+e.message+') — descargando de respaldo', 5000); descargar();
+  }
+}
+
+/* ---------- Toast ---------- */
+let tT;
+function toast(html,ms=2600){const t=document.getElementById('toast'); t.innerHTML=html;
+  t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),ms);}
+
+/* ---------- Eventos ---------- */
+document.getElementById('fecha').addEventListener('change',guardar);
+document.getElementById('q').addEventListener('input',e=>{filtro=e.target.value; render();});
+document.getElementById('soloPend').addEventListener('click',e=>{soloPend=!soloPend;
+  e.target.classList.toggle('on',soloPend); render();});
+document.getElementById('bCSV').addEventListener('click',descargar);
+document.getElementById('bShare').addEventListener('click',compartir);
+document.getElementById('bDrive').addEventListener('click',subirDrive);
+document.getElementById('cfg').addEventListener('click',pedirURL);
+document.getElementById('bReset').addEventListener('click',()=>{
+  if(confirm('¿Vaciar todas las unidades introducidas? (no se puede deshacer)')){
+    counts={}; guardar(); render(); toast('Inventario vaciado');}
+});
+
+cargar();
+</script>
+</body>
+</html>
