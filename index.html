@@ -128,6 +128,7 @@ let counts={};           // clave "prov||producto" -> string
 let soloPend=false, filtro='';
 const key=(p,it)=>p+'||'+it;
 const hoy=()=>new Date().toISOString().slice(0,10);
+function fechaES(){const v=document.getElementById('fecha').value||hoy(); const p=v.split('-'); return p.length===3? p[2]+'-'+p[1]+'-'+p[0] : v;}
 
 async function cargar(){
   const st=await dbGet('current');
@@ -229,7 +230,7 @@ function buildCSV(){
   }
   return '﻿'+filas.map(f=>f.map(csvCell).join(',')).join('\r\n');
 }
-function nombreArchivo(){return 'Inventario_'+(document.getElementById('fecha').value||hoy())+'.csv';}
+function nombreArchivo(){return 'Inventario '+fechaES()+'.csv';}
 function descargar(){
   const blob=new Blob([buildCSV()],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -261,7 +262,7 @@ async function subirDrive(){
   try{
     // text/plain evita el "preflight" CORS de Apps Script
     const r=await fetch(url,{method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({token:TOKEN, fecha:document.getElementById('fecha').value, csv:buildCSV()})});
+      body:JSON.stringify({token:TOKEN, fecha:fechaES(), csv:buildCSV()})});
     const j=await r.json().catch(()=>null);
     if(j && j.ok){ toast('Subido a Drive ✅'+(j.link?` · <a href="${j.link}" target="_blank">abrir</a>`:''), 7000); }
     else if(j && j.error){ throw new Error(j.error); }
