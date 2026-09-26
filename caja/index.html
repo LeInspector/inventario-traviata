@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#c0392b">
+<title>Cierre de caja · La Traviata</title>
+<style>
+  :root{
+    --rojo:#c0392b; --rojo-osc:#a52f22; --verde:#1e8449; --amber:#b9770e;
+    --bg:#f4f2ee; --card:#ffffff; --linea:#e4e0d8; --txt:#20242a; --mut:#6b7280;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg); color:var(--txt); font-size:17px; padding-bottom:92px}
+  header{position:sticky; top:0; z-index:20; background:var(--rojo);
+    color:#fff; padding:10px 14px; box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .htop{display:flex; align-items:center; gap:10px}
+  .htop h1{font-size:19px; margin:0; font-weight:700; letter-spacing:.2px; flex:1}
+  .htop .fecha{background:rgba(255,255,255,.16); border:0; color:#fff;
+    border-radius:8px; padding:8px 10px; font-size:16px; cursor:pointer}
+  .htop .dia{font-size:14px; opacity:.9}
+  .tabs{position:sticky; top:56px; z-index:15; display:flex; gap:8px; padding:10px 12px;
+    background:var(--bg); border-bottom:1px solid var(--linea); overflow-x:auto}
+  .tab{background:var(--card); border:1px solid var(--linea); border-radius:10px;
+    padding:11px 18px; font-size:16px; font-weight:600; cursor:pointer; white-space:nowrap; color:var(--txt)}
+  .tab.on{background:var(--rojo); color:#fff; border-color:var(--rojo)}
+  .wrap{display:grid; grid-template-columns:1fr 340px; gap:14px; padding:12px; max-width:1300px; margin:0 auto; align-items:start}
+  @media(max-width:900px){ .wrap{grid-template-columns:1fr} }
+  .panel{display:none} .panel.on{display:block}
+  .card{background:var(--card); border:1px solid var(--linea); border-radius:14px; padding:14px 15px; margin-bottom:12px}
+  .card h2{font-size:16px; margin:0 0 10px; color:var(--rojo-osc); text-transform:uppercase; letter-spacing:.4px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  @media(max-width:700px){ .grid2{grid-template-columns:1fr} }
+  table{width:100%; border-collapse:collapse}
+  th{font-size:13px; color:var(--mut); font-weight:600; text-align:right; padding:4px 5px 8px}
+  th:first-child,td:first-child{text-align:left}
+  th b{display:block; font-size:17px; color:var(--txt)}
+  td{padding:4px 5px; border-top:1px solid #f0ede7}
+  td.nom{font-weight:700; font-size:17px; white-space:nowrap}
+  td.tot, .out{font-weight:700; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  tr.totales td{border-top:2px solid var(--linea); background:#faf8f4; font-weight:700; text-align:right; padding:12px 8px; white-space:nowrap}
+  tr.totales td:first-child{text-align:left}
+  .num{width:100%; min-width:90px; height:52px; font-size:20px; text-align:right; font-variant-numeric:tabular-nums;
+    border:1px solid var(--linea); border-radius:10px; padding:0 11px; background:#fbfaf7; color:var(--txt); outline:0}
+  .num:focus{border-color:var(--rojo); background:#fff; box-shadow:0 0 0 3px rgba(192,57,43,.15)}
+  .num::placeholder{color:#c9c5bc}
+  .num.mal{border-color:#d35400; background:#fff4e0}
+  .hora{height:52px; font-size:19px; border:1px solid var(--linea); border-radius:10px; padding:0 9px;
+    background:#fbfaf7; width:100%; min-width:120px}
+  .campo{display:grid; grid-template-columns:1fr 180px; align-items:center; gap:10px; padding:6px 0; border-top:1px solid #f0ede7}
+  .campo:first-of-type{border-top:0}
+  .campo label{font-weight:600; line-height:1.2}
+  .campo small{display:block; font-weight:400; color:var(--mut); font-size:13px; margin-top:2px}
+  .campo small.aviso{color:#d35400; font-weight:600}
+  .copiar{border:0; background:#eef0f2; border-radius:7px; padding:3px 8px; font-size:13px; margin-top:3px; cursor:pointer; color:var(--txt)}
+  .sub{display:flex; justify-content:space-between; align-items:center; padding:12px 0 2px; border-top:2px solid var(--linea); margin-top:6px; font-weight:700; font-size:18px}
+  .grande{display:flex; justify-content:space-between; align-items:center; background:#20242a; color:#fff;
+    border-radius:14px; padding:16px 18px; font-size:21px; font-weight:800; margin-bottom:12px}
+  .zgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; align-items:end}
+  .zgrid label{display:block; font-weight:600; margin-bottom:5px}
+  .zgrid label small{color:var(--mut); font-weight:400; font-size:12.5px}
+  .zsum{background:#faf8f4; border-radius:10px; height:52px; display:flex; align-items:center; justify-content:flex-end; padding:0 12px; font-size:21px; font-weight:800}
+  aside{position:sticky; top:122px}
+  .cuadre .fila{display:flex; justify-content:space-between; padding:7px 0; border-top:1px solid #f0ede7; font-variant-numeric:tabular-nums}
+  .cuadre .fila:first-of-type{border-top:0}
+  .cuadre .fila span:last-child{font-weight:700}
+  .desc{margin-top:10px; border-radius:12px; padding:14px; text-align:center; background:#eef0f2}
+  .desc .v{font-size:32px; font-weight:800; font-variant-numeric:tabular-nums}
+  .desc .t{font-size:14px; font-weight:600; margin-top:2px}
+  .desc.ok{background:#e3f5ea; color:var(--verde)}
+  .desc.ko{background:#fdecea; color:var(--rojo)}
+  .chk{font-size:14px}
+  .chk .fila span:last-child{font-weight:600}
+  .okc{color:var(--verde)} .koc{color:var(--amber)}
+  .formula{font-size:12.5px; color:var(--mut); margin-top:8px; line-height:1.35}
+  textarea{width:100%; min-height:70px; font-size:16px; font-family:inherit; border:1px solid var(--linea); border-radius:10px; padding:9px; background:#fbfaf7}
+  .hist td{padding:10px 6px; font-variant-numeric:tabular-nums}
+  .hist td.r{text-align:right}
+  .mini{border:0; border-radius:9px; padding:9px 12px; font-size:14px; font-weight:600; cursor:pointer; background:#eef0f2; color:var(--txt)}
+  .mini.prim{background:var(--rojo); color:#fff}
+  .estado{font-size:13px; font-weight:700; padding:3px 9px; border-radius:99px; white-space:nowrap}
+  .estado.env{background:#e3f5ea; color:var(--verde)}
+  .estado.pend{background:#fff4e0; color:var(--amber)}
+  .vacio{text-align:center; color:var(--mut); padding:30px 20px}
+  footer{position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex; gap:10px; align-items:center;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:#fff;
+    border-top:1px solid var(--linea); box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+  footer .res{flex:1; font-size:15px; color:var(--mut); line-height:1.3}
+  footer .res b{color:var(--txt); font-size:18px}
+  .btn{border:0; border-radius:12px; padding:15px 22px; font-size:17px; font-weight:700; cursor:pointer}
+  .btn.prim{background:var(--rojo); color:#fff; min-width:240px}
+  .btn.sec{background:#eef0f2; color:var(--txt)}
+  .btn:active{transform:translateY(1px)}
+  .toast{position:fixed; left:50%; bottom:98px; transform:translateX(-50%) translateY(20px);
+    background:#20242a; color:#fff; padding:12px 18px; border-radius:12px; font-size:15px;
+    max-width:90%; text-align:center; opacity:0; pointer-events:none; transition:.25s; z-index:60}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto}
+  .toast a{color:#8ecaff}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:50; display:none; align-items:center; justify-content:center; padding:16px}
+  .modal.on{display:flex}
+  .modal .caja{background:#fff; border-radius:16px; padding:18px 20px; width:min(720px,100%); max-height:92vh; overflow:auto}
+  .modal h3{margin:0 0 12px; font-size:19px}
+  .modal label{display:block; font-weight:600; margin:10px 0 5px}
+  .modal label small{font-weight:400; color:var(--mut)}
+  .modal input{width:100%; height:46px; font-size:16px; border:1px solid var(--linea); border-radius:10px; padding:0 10px}
+  .modal textarea{min-height:170px}
+  .modal .acc{display:flex; gap:10px; justify-content:flex-end; margin-top:16px}
+  /* lista de la noche: filas vacías en gris, fila de añadir, quitar */
+  tr.vac td.nom{color:#9aa0a8; font-weight:600}
+  tr.vac td.tot{color:#c9c5bc}
+  td.nom .tag{display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 6px; border-radius:99px;
+    background:#fff4e0; color:var(--amber); vertical-align:middle}
+  td.x{width:1%; text-align:right}
+  .quitar{border:0; background:transparent; color:#b0b5bd; font-size:20px; width:40px; height:44px; border-radius:9px; cursor:pointer}
+  .quitar:active{background:#fdecea; color:var(--rojo)}
+  tr.add td{border-top:2px dashed var(--linea); padding-top:10px}
+  .addbox{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .addbox input{flex:1; min-width:170px; height:48px; font-size:17px; border:1px solid var(--linea); border-radius:10px; padding:0 11px; background:#fbfaf7}
+  .addbox .mini{height:48px; padding:0 14px; font-size:15px}
+  .nota-vac{font-size:12.5px; color:var(--mut); margin-top:8px}
+  .num.ped{min-width:64px}
+  #mQuitar .caja{width:min(460px,100%)}
+  #mQuitar .acc{flex-direction:column}
+  #mQuitar .acc .btn{width:100%}
+</style>
+</head>
+<body>
+<header>
+  <div class="htop">
+    <h1>Cierre de caja · La Traviata</h1>
+    <span class="dia" id="dia"></span>
+    <input type="date" id="fecha" class="fecha">
+    <button id="cfg" class="fecha" title="Ajustes" style="font-size:18px">⚙</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab on" data-tab="rep">🛵 Repartidores</button>
+  <button class="tab" data-tab="hor">🕒 Horarios</button>
+  <button class="tab" data-tab="din">💶 Dinero</button>
+  <button class="tab" data-tab="his">📚 Historial</button>
+</nav>
+
+<div class="wrap">
+  <main>
+    <!-- HOJA 1 -->
+    <section class="panel on" id="p-rep">
+      <div class="card">
+        <h2>Repartidores</h2>
+        <table>
+          <thead><tr><th>Repartidor</th><th><b>Nº</b>Pedidos</th><th><b>O</b>Efectivo</th><th><b>T</b>Tarjeta</th><th><b>W</b>Web</th><th><b>JE</b>Just Eat</th><th><b>Total</b>&nbsp;</th><th></th></tr></thead>
+          <tbody id="repBody"></tbody>
+          <tfoot><tr class="totales"><td>Totales</td><td id="tP"></td><td id="tO"></td><td id="tT"></td><td id="tW"></td><td id="tJE"></td><td id="tRep"></td><td></td></tr></tfoot>
+        </table>
+        <div class="nota-vac">Las filas en gris no tienen datos: no cuentan y no se guardan. ✕ quita a alguien de esta noche.</div>
+      </div>
+      <div class="card">
+        <h2>Cierres Z del TPV</h2>
+        <div class="zgrid">
+          <div><label>Z1 Llevar <small>(reparto)</small></label><input class="num" inputmode="decimal" placeholder="0,00" data-k="z|z1"></div>
+          <div><label>Z2 Recoger <small>(en local)</small></label><input class="num" inputmode="decimal" placeholder="0,00" data-k="z|z2"></div>
+          <div><label>JE <small>(Just Eat)</small></label><input class="num" inputmode="decimal" placeholder="0,00" data-k="z|je"></div>
+          <div><label>Suma total</label><div class="zsum" id="sumaZ"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOJA 2: HORARIOS -->
+    <section class="panel" id="p-hor">
+      <div class="card">
+        <h2>Horarios</h2>
+        <table>
+          <thead><tr><th>Persona</th><th style="text-align:left">Entrada</th><th style="text-align:left">Salida</th><th>Horas</th><th></th></tr></thead>
+          <tbody id="horBody"></tbody>
+          <tfoot><tr class="totales"><td>Total</td><td></td><td></td><td id="tHoras"></td><td></td></tr></tfoot>
+        </table>
+        <div class="nota-vac">Las filas sin horas no cuentan y no se guardan. ✕ quita a alguien de esta noche.</div>
+      </div>
+    </section>
+
+    <!-- HOJA 2: DINERO -->
+    <section class="panel" id="p-din">
+      <div class="grid2">
+        <div class="card">
+          <h2>Tarjetas y plataformas</h2>
+          <div class="campo"><label>Tarjeta repartidores<small id="h-tRep"></small></label><input class="num" inputmode="decimal" placeholder="0,00" data-k="din|tRep"></div>
+          <div class="campo"><label>Tarjeta recoger</label><input class="num" inputmode="decimal" placeholder="0,00" data-k="din|tRec"></div>
+          <div class="campo"><label>Web<small id="h-web"></small></label><input class="num" inputmode="decimal" placeholder="0,00" data-k="din|web"></div>
+          <div class="campo"><label>Tótem</label><input class="num" inputmode="decimal" placeholder="0,00" data-k="din|totem"></div>
+          <div class="campo"><label>JE (Just Eat)<small id="h-je"></small></label><input class="num" inputmode="decimal" placeholder="0,00" data-k="din|je"></div>
+          <div class="sub"><span>Subtotal</span><span id="subTarj"></span></div>
+        </div>
+        <div class="card">
+          <h2>Efectivo <small style="text-transform:none;color:var(--mut);font-weight:400;letter-spacing:0">(importe en €, no unidades)</small></h2>
+          <div id="billetes"></div>
+          <div class="campo"><label>Monedas</label><input class="num" inputmode="decimal" placeholder="0,00" data-k="din|mon"></div>
+          <div class="sub"><span>Total efectivo</span><span id="subEfec"></span></div>
+        </div>
+      </div>
+      <div class="grande"><span>SUMA TOTAL</span><span id="sumaDin"></span></div>
+      <div class="card"><h2>Notas</h2><textarea id="notas" placeholder="Incidencias, vales, pagos a proveedores en efectivo…"></textarea></div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section class="panel" id="p-his">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <h2 style="flex:1;margin:0">Cierres guardados en esta tablet</h2>
+          <button class="mini" id="bCSV">⬇️ CSV</button>
+        </div>
+        <div id="histBox"></div>
+      </div>
+    </section>
+  </main>
+
+  <aside>
+    <div class="card cuadre">
+      <h2>Cuadre</h2>
+      <div class="fila"><span>Esperado (Z1+Z2+JE)</span><span id="cEsp"></span></div>
+      <div class="fila"><span>Suma total dinero</span><span id="cDin"></span></div>
+      <div class="desc" id="cDesc"><div class="v" id="cDescV"></div><div class="t" id="cDescT"></div></div>
+      <div class="formula">Descuadre = (Tarjetas + Web + Tótem + JE + Efectivo) − (Z1 + Z2 + JE)</div>
+    </div>
+    <div class="card cuadre chk">
+      <h2>Comprobaciones</h2>
+      <div id="checks"></div>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <button class="btn sec" id="bNueva">🗑️ Vaciar</button>
+  <div class="res" id="resumen"></div>
+  <button class="btn prim" id="bCerrar">🔒 Cerrar caja</button>
+</footer>
+
+<div class="modal" id="mCfg"><div class="caja">
+  <h3>⚙ Ajustes</h3>
+  <div class="grid2">
+    <div><label>Repartidores fijos <small>(uno por línea; salen cada noche)</small></label><textarea id="cfRep"></textarea></div>
+    <div><label>Personal fijo (horarios) <small>(uno por línea)</small></label><textarea id="cfPer"></textarea></div>
+  </div>
+  <div class="grid2">
+    <div><label>Tolerancia de descuadre (€) <small>se considera cuadrado</small></label><input id="cfTol" inputmode="decimal" placeholder="0,00"></div>
+  </div>
+  <label>URL de Apps Script <small>(termina en /exec; vacío = solo se guarda en la tablet)</small></label>
+  <input id="cfURL" placeholder="https://script.google.com/macros/s/…/exec">
+  <div class="acc"><button class="btn sec" id="cfCancel">Cancelar</button><button class="btn prim" id="cfOk" style="min-width:140px">Guardar</button></div>
+</div></div>
+
+<div class="modal" id="mQuitar"><div class="caja">
+  <h3 id="mqTit"></h3>
+  <div id="mqTxt" style="color:var(--mut);font-size:15px"></div>
+  <div class="acc">
+    <button class="btn prim" id="mqHoy">Quitar solo esta noche</button>
+    <button class="btn sec" id="mqFijo">Quitar también de la lista fija</button>
+    <button class="btn sec" id="mqNo" style="background:transparent">Cancelar</button>
+  </div>
+</div></div>
+<datalist id="nombres"></datalist>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/*
+ * CIERRE DE CAJA · La Traviata — prototipo (una sola página, funciona sin internet).
+ *
+ * FÓRMULA DE CUADRE (validada por Ivan 2026-09-26; el fondo de caja se cuenta aparte):
+ *   Esperado     = Z1 Llevar + Z2 Recoger + JE                      (lo que dicen el TPV y Just Eat)
+ *   Suma dinero  = Tarjeta repartidores + Tarjeta recoger + Web + Tótem + JE
+ *                + Billetes (100+50+20+10+5, en €) + Monedas         (lo que hay/consta al cerrar)
+ *   Descuadre    = Suma dinero − Esperado      (>0 sobra dinero, <0 falta; verde si |d| ≤ tolerancia)
+ * Comprobaciones informativas (no cambian el descuadre):
+ *   Tarjeta repartidores ≈ Σ T;  Web ≈ Σ W;  JE (dinero) ≈ JE (Z);  Z1 Llevar ≈ Σ total repartidores.
+ *
+ * PERSONAS: cada noche tiene su propia lista (st.repN / st.perN), que arranca con la lista fija
+ * de ⚙ y se cambia desde la propia pantalla (＋ añadir / ✕ quitar). Una fila sin datos no cuenta
+ * ni se envía. Al Sheet se manda por NOMBRE, nunca una columna por persona:
+ *   hoja "Cierres": columnas fijas + "Repartidores"/"Horarios" en texto + "Datos (JSON)".
+ *   hoja "Detalle": una fila por persona y noche (Fecha, Tipo, Nombre, Pedidos, O, T, W, JE, …).
+ */
+const TOKEN = 'EHxXgDal7GRZnLzJSLAxucx7';   // debe coincidir con el del Apps Script
+const DRIVE_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwxjy5LMZ5jaDjstChBZ9ZFoqSNwAOLrDYUCFo7dW3IVF5Iq6tSHUH18mDYEPbhMz2V/exec';               // URL /exec del Apps Script (se puede poner con ⚙)
+const REP_DEF = ['MC','Alex','Anas','Kevin','Denis'];
+const PER_DEF = ['Alex','MC','Haian','Gisella','Anas','Kevin','Denis','Carmen','Laura'];
+const BILLETES = [100,50,20,10,5];
+const METODOS = [['O','Efectivo'],['T','Tarjeta'],['W','Web'],['JE','Just Eat']];
+
+/* ---------- IndexedDB mínima ---------- */
+const DB_NAME='traviata-caja', STORE='estado';
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore(STORE);
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
+async function dbGet(k){const db=await idb();return new Promise((res)=>{const t=db.transaction(STORE);
+  const rq=t.objectStore(STORE).get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(null);});}
+async function dbSet(k,v){const db=await idb();return new Promise((res)=>{const t=db.transaction(STORE,'readwrite');
+  t.objectStore(STORE).put(v,k); t.oncomplete=()=>res(); t.onerror=()=>res();});}
+
+/* ---------- Ajustes (localStorage) ---------- */
+function lista(k,def){try{const v=JSON.parse(localStorage.getItem(k)); return Array.isArray(v)&&v.length?v:def;}catch(e){return def;}}
+const cfg={
+  rep:()=>lista('cajaRep',REP_DEF), per:()=>lista('cajaPer',PER_DEF),
+  url:()=>{const v=localStorage.getItem('cajaURL'); return ((v!==null?v:DRIVE_URL_DEFAULT)||'').trim();},
+ tol:()=>localStorage.getItem('cajaTol')||'',
+};
+
+/* ---------- Utilidades ---------- */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fechaDefecto(){const d=new Date(); if(d.getHours()<6) d.setDate(d.getDate()-1); return ymd(d);}  // de madrugada = noche anterior
+function fechaLarga(f){if(!f) return ''; const [y,m,d]=f.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});}
+function fechaCorta(f){const p=(f||'').split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:f;}
+// "166,2" · "1.234,50" · "27.70" · "350 €" -> céntimos (entero). null si no es número.
+function cents(s){
+  s=String(s??'').trim().replace(/[€\s]/g,''); if(s==='') return 0;
+  if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.');
+  if(!/^-?\d*\.?\d*$/.test(s)||s==='.'||s==='-') return null;
+  return Math.round(parseFloat(s)*100);
+}
+const C=s=>cents(s)??0;
+const eur=c=>(c/100).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const eurS=c=>(c>0?'+':c<0?'−':'')+eur(Math.abs(c));
+const num2=c=>Math.round(c)/100;             // céntimos -> número para la hoja
+function minutos(hhmm){if(!hhmm) return null; const [h,m]=hhmm.split(':').map(Number); return isNaN(h)?null:h*60+(m||0);}
+function horasTurno(e,s){const a=minutos(e), b=minutos(s); if(a===null||b===null) return null;
+  let d=b-a; if(d<=0) d+=1440; return d;}    // si sale antes de entrar, cruza medianoche
+const fmtH=m=>m==null?'—':Math.floor(m/60)+' h'+(m%60?' '+String(m%60).padStart(2,'0')+' min':'');
+
+/* ---------- Estado ---------- */
+function vacio(fecha){return {fecha:fecha||fechaDefecto(), repN:[...cfg.rep()], perN:[...cfg.per()],
+  rep:{}, z:{}, hor:{}, din:{}, notas:''};}
+let st=vacio();
+let hist={};   // fecha -> registro de cierre
+
+function get(k){const [a,b,c]=k.split('|'); const o=st[a]||{}; return c?((o[b]||{})[c]??''):(o[b]??'');}
+function set(k,v){const [a,b,c]=k.split('|'); st[a]=st[a]||{};
+  if(c){st[a][b]=st[a][b]||{}; st[a][b][c]=v;} else st[a][b]=v;}
+
+// Lista de ESTA noche (se edita desde la pantalla; arranca con la lista fija de ⚙)
+const repList=()=>st.repN, perList=()=>st.perN;
+// ¿La fila tiene datos? Si no, no cuenta ni se guarda.
+const repTiene=n=>['P',...METODOS.map(([m])=>m)].some(m=>C(get(`rep|${n}|${m}`))!==0);
+const horTiene=n=>!!(get(`hor|${n}|e`)||get(`hor|${n}|s`));
+// Compatibilidad con hojas a medias guardadas antes de existir repN/perN
+function normalizar(x){
+  const con=(obj,f)=>Object.keys(obj||{}).filter(f);
+  if(!Array.isArray(x.repN)) x.repN=[...new Set([...cfg.rep(),...con(x.rep,n=>Object.values(x.rep[n]||{}).some(v=>v!==''))])];
+  if(!Array.isArray(x.perN)) x.perN=[...new Set([...cfg.per(),...con(x.hor,n=>x.hor[n]&&(x.hor[n].e||x.hor[n].s))])];
+  return x;
+}
+// Todos los nombres conocidos (fijos + los que salieron en cierres anteriores) para sugerir
+function conocidos(){const s=new Set([...cfg.rep(),...cfg.per()]);
+  Object.values(hist).forEach(x=>{(x.st&&x.st.repN||[]).forEach(n=>s.add(n)); (x.st&&x.st.perN||[]).forEach(n=>s.add(n));});
+  return [...s].sort((a,b)=>a.localeCompare(b,'es'));}
+
+/* ---------- Cálculo ---------- */
+function calc(){
+  const r={rep:{}, col:{O:0,T:0,W:0,JE:0}, ped:0, hor:{}, errores:0};
+  repList().forEach(n=>{const x={}; let t=0;
+    METODOS.forEach(([m])=>{x[m]=C(get(`rep|${n}|${m}`)); t+=x[m]; r.col[m]+=x[m];}); x.tot=t;
+    x.P=Math.round(C(get(`rep|${n}|P`))/100); r.ped+=x.P; r.rep[n]=x;});
+  r.totRep=r.col.O+r.col.T+r.col.W+r.col.JE;
+  r.z1=C(get('z|z1')); r.z2=C(get('z|z2')); r.zje=C(get('z|je')); r.sumaZ=r.z1+r.z2+r.zje;
+  r.horas=0; perList().forEach(n=>{const m=horasTurno(get(`hor|${n}|e`),get(`hor|${n}|s`)); r.hor[n]=m; if(m) r.horas+=m;});
+  const d=k=>C(get('din|'+k));
+  r.tarj=d('tRep')+d('tRec')+d('web')+d('totem')+d('je');
+  r.efec=BILLETES.reduce((a,b)=>a+d('b'+b),0)+d('mon');
+  r.sumaDin=r.tarj+r.efec; r.contado=r.sumaDin;
+  r.esperado=r.sumaZ; r.desc=r.contado-r.esperado;
+  r.tol=C(cfg.tol()); r.cuadra=Math.abs(r.desc)<=r.tol;
+  r.billMal=BILLETES.filter(b=>d('b'+b)%(b*100)!==0);
+  return r;
+}
+
+/* ---------- Render ---------- */
+const inp=(k,ph='0,00')=>`<input class="num" inputmode="decimal" placeholder="${ph}" data-k="${esc(k)}" value="${esc(get(k))}">`;
+function render(){
+  const fijoR=cfg.rep(), fijoP=cfg.per();
+  const tag=(n,fijos)=>fijos.includes(n)?'':'<span class="tag">hoy</span>';
+  const btnQuitar=(tipo,n)=>`<td class="x"><button class="quitar" data-quita="${tipo}" data-n="${esc(n)}" title="Quitar de esta noche">✕</button></td>`;
+  const addRow=(tipo,cols,ph)=>`<tr class="add"><td colspan="${cols}"><div class="addbox">
+      <input list="nombres" id="add-${tipo}" placeholder="${ph}" autocomplete="off" enterkeyhint="done">
+      <button class="mini prim" data-add="${tipo}" data-fijo="0">＋ Solo hoy</button>
+      <button class="mini" data-add="${tipo}" data-fijo="1">＋ Hoy y fijo</button></div></td></tr>`;
+  document.getElementById('repBody').innerHTML=repList().map(n=>
+    `<tr data-fila-rep="${esc(n)}"><td class="nom">${esc(n)}${tag(n,fijoR)}</td><td>${inp(`rep|${n}|P`,'')}</td>${METODOS.map(([m])=>`<td>${inp(`rep|${n}|${m}`,'')}</td>`).join('')}<td class="tot" data-tot="${esc(n)}"></td>${btnQuitar('rep',n)}</tr>`).join('')+
+    addRow('rep',8,'Añadir repartidor…');
+  document.querySelectorAll('#repBody input[data-k$="|P"]').forEach(el=>{el.classList.add('ped'); el.inputMode='numeric';});
+  document.getElementById('horBody').innerHTML=perList().map(n=>
+    `<tr data-fila-hor="${esc(n)}"><td class="nom">${esc(n)}${tag(n,fijoP)}</td>
+      <td><input type="time" class="hora" data-k="${esc(`hor|${n}|e`)}" value="${esc(get(`hor|${n}|e`))}"></td>
+      <td><input type="time" class="hora" data-k="${esc(`hor|${n}|s`)}" value="${esc(get(`hor|${n}|s`))}"></td>
+      <td class="tot" data-hor="${esc(n)}"></td>${btnQuitar('hor',n)}</tr>`).join('')+
+    addRow('hor',5,'Añadir persona…');
+  document.getElementById('nombres').innerHTML=conocidos().map(n=>`<option value="${esc(n)}">`).join('');
+  document.getElementById('billetes').innerHTML=BILLETES.map(b=>
+    `<div class="campo"><label>Billetes de ${b} €<small id="h-b${b}"></small></label>${inp('din|b'+b)}</div>`).join('');
+  document.querySelectorAll('input[data-k]').forEach(el=>el.value=get(el.dataset.k));
+  document.getElementById('fecha').value=st.fecha;
+  document.getElementById('notas').value=st.notas||'';
+  recalc();
+}
+function txt(id,v){const e=document.getElementById(id); if(e) e.innerHTML=v;}
+function hint(dinero,ref,etq,k){ // pista "Hoja 1: X" con botón para copiar
+  if(!ref) return '';
+  const dif=dinero-ref;
+  return `${etq}: ${eur(ref)} `+(dinero===ref?'<span class="okc">✓</span>':`<button class="copiar" data-copia="${k}" data-v="${num2(ref)}">usar</button>`)+
+    (dinero&&dinero!==ref?` <span class="koc">(${eurS(dif)})</span>`:'');
+}
+function recalc(){
+  const r=calc();
+  document.querySelectorAll('input.num[data-k]').forEach(el=>el.classList.toggle('mal',cents(el.value)===null));
+  Object.entries(r.rep).forEach(([n,x])=>{const td=document.querySelector(`[data-tot="${CSS.escape(n)}"]`); if(td) td.textContent=x.tot?eur(x.tot):'—';
+    const tr=document.querySelector(`[data-fila-rep="${CSS.escape(n)}"]`); if(tr) tr.classList.toggle('vac',!repTiene(n));});
+  perList().forEach(n=>{const tr=document.querySelector(`[data-fila-hor="${CSS.escape(n)}"]`); if(tr) tr.classList.toggle('vac',!horTiene(n));});
+  txt('tP',r.ped?r.ped+' ped.':'—'); txt('tO',eur(r.col.O)); txt('tT',eur(r.col.T)); txt('tW',eur(r.col.W)); txt('tJE',eur(r.col.JE)); txt('tRep',eur(r.totRep));
+  txt('sumaZ',eur(r.sumaZ));
+  Object.entries(r.hor).forEach(([n,m])=>{const td=document.querySelector(`[data-hor="${CSS.escape(n)}"]`); if(td) td.textContent=fmtH(m);});
+  txt('tHoras',fmtH(r.horas)+` <small style="color:var(--mut);font-weight:400">(${(r.horas/60).toLocaleString('es-ES',{maximumFractionDigits:2})} h)</small>`);
+  BILLETES.forEach(b=>{const e=document.getElementById('h-b'+b), v=C(get('din|b'+b)); if(!e) return;
+    if(!v){e.textContent=''; e.className='';}
+    else if(v%(b*100)===0){e.textContent=`= ${v/(b*100)} billete${v===b*100?'':'s'}`; e.className='';}
+    else{e.textContent=`⚠ no es múltiplo de ${b} €`; e.className='aviso';}});
+  txt('h-tRep',hint(C(get('din|tRep')),r.col.T,'Hoja 1 (T)','din|tRep'));
+  txt('h-web',hint(C(get('din|web')),r.col.W,'Hoja 1 (W)','din|web'));
+  txt('h-je',hint(C(get('din|je')),r.zje,'Z de JE','din|je'));
+  txt('subTarj',eur(r.tarj)); txt('subEfec',eur(r.efec)); txt('sumaDin',eur(r.sumaDin));
+  txt('cEsp',eur(r.esperado)); txt('cDin',eur(r.sumaDin)); txt('cCont',eur(r.contado));
+  const vacia=!r.sumaZ&&!r.sumaDin;
+  const box=document.getElementById('cDesc');
+  box.className='desc'+(vacia?'':(r.cuadra?' ok':' ko'));
+  txt('cDescV',vacia?'—':eurS(r.desc));
+  txt('cDescT',vacia?'Rellena Z y dinero':(r.cuadra?(r.desc?'Cuadra (dentro de tolerancia) ✓':'Cuadra ✓'):(r.desc>0?'SOBRA dinero':'FALTA dinero')));
+  const chk=(etq,a,b)=>{const d=a-b; return `<div class="fila"><span>${etq}</span><span class="${d?'koc':'okc'}">${d?eurS(d):'✓'}</span></div>`;};
+  txt('checks',
+    chk('Tarjeta repartidores vs Σ T',C(get('din|tRep')),r.col.T)+
+    chk('Web vs Σ W',C(get('din|web')),r.col.W)+
+    chk('JE dinero vs JE (Z)',C(get('din|je')),r.zje)+
+    chk('Z1 Llevar vs total repartidores',r.z1,r.totRep)+
+    (r.billMal.length?`<div class="fila"><span>Billetes no múltiplos</span><span class="koc">${r.billMal.join(', ')} €</span></div>`:''));
+  txt('resumen',`Esperado <b>${eur(r.esperado)}</b> · Contado <b>${eur(r.contado)}</b> · Descuadre <b class="${vacia?'':(r.cuadra?'okc':'koc')}" style="color:${vacia?'':(r.cuadra?'var(--verde)':'var(--rojo)')}">${vacia?'—':eurS(r.desc)}</b>`);
+  txt('dia',fechaLarga(st.fecha));
+  return r;
+}
+
+let tSave;
+function guardar(){clearTimeout(tSave); tSave=setTimeout(()=>dbSet('current',st),300);}
+
+/* ---------- Datos para el Sheet (por NOMBRE: aguanta altas y bajas sin mover columnas) ---------- */
+const dec=c=>num2(c).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+const hDec=m=>m==null?'':Math.round(m/60*100)/100;
+function payload(){
+  const r=calc(), H=[], V=[]; const add=(h,v)=>{H.push(h); V.push(v);};
+  const reps=repList().filter(repTiene), pers=perList().filter(horTiene);
+  const datos={rep:{}, hor:{}}, detalle=[];
+  reps.forEach(n=>{const x=r.rep[n];
+    datos.rep[n]={P:x.P, O:num2(x.O), T:num2(x.T), W:num2(x.W), JE:num2(x.JE), total:num2(x.tot)};
+    detalle.push([st.fecha,'Repartidor',n,x.P||'',num2(x.O),num2(x.T),num2(x.W),num2(x.JE),num2(x.tot),'','','']);});
+  pers.forEach(n=>{const e=get(`hor|${n}|e`), s2=get(`hor|${n}|s`);
+    datos.hor[n]={entrada:e, salida:s2, horas:hDec(r.hor[n])};
+    detalle.push([st.fecha,'Horario',n,'','','','','','',e,s2,hDec(r.hor[n])]);});
+  const txtRep=reps.map(n=>{const x=r.rep[n];
+    return `${n}: `+[x.P?`${x.P} ped`:'',...METODOS.filter(([m])=>x[m]).map(([m])=>`${m} ${dec(x[m])}`)].filter(Boolean).join(' · ')+` = ${dec(x.tot)}`;}).join(' | ');
+  const txtHor=pers.map(n=>`${n} ${get(`hor|${n}|e`)||'?'}–${get(`hor|${n}|s`)||'?'}`+(r.hor[n]!=null?` (${String(hDec(r.hor[n])).replace('.',',')} h)`:'')).join(' | ');
+  add('Fecha',st.fecha);
+  add('Nº pedidos',r.ped);
+  METODOS.forEach(([m])=>add(`Total ${m}`,num2(r.col[m]))); add('Total repartidores',num2(r.totRep));
+  add('Z1 Llevar',num2(r.z1)); add('Z2 Recoger',num2(r.z2)); add('JE (Z)',num2(r.zje)); add('Suma Z',num2(r.sumaZ));
+  [['tRep','Tarjeta repartidores'],['tRec','Tarjeta recoger'],['web','Web'],['totem','Tótem'],['je','JE (dinero)']]
+    .forEach(([k,h])=>add(h,num2(C(get('din|'+k)))));
+  BILLETES.forEach(b=>add(`Billetes ${b}`,num2(C(get('din|b'+b)))));
+  add('Monedas',num2(C(get('din|mon')))); add('Total efectivo',num2(r.efec));
+  add('Suma total dinero',num2(r.sumaDin)); add('Esperado (Z1+Z2+JE)',num2(r.esperado));
+  add('Descuadre',num2(r.desc)); add('Cuadra',r.cuadra?'SÍ':'NO');
+  add('Nº repartidores',reps.length); add('Nº personas',pers.length); add('Total horas',hDec(r.horas));
+  add('Repartidores',txtRep); add('Horarios',txtHor);
+  add('Notas',st.notas||''); add('Cerrado el',new Date().toLocaleString('es-ES'));
+  add('Datos (JSON)',JSON.stringify(datos));
+  return {headers:H, values:V, detalle, r};
+}
+
+/* ---------- Cerrar caja ---------- */
+async function cerrarCaja(){
+  const malos=[...document.querySelectorAll('input.num.mal')];
+  if(malos.length){toast('Hay importes que no son números (en naranja). Corrígelos.',4000); return;}
+  const {headers,values,detalle,r}=payload();
+  if(!r.sumaZ&&!r.sumaDin){toast('La hoja está vacía.'); return;}
+  const avisos=[];
+  const sinHoras=perList().filter(n=>horTiene(n)&&r.hor[n]==null);
+  if(sinHoras.length) avisos.push(`Falta entrada o salida de: ${sinHoras.join(', ')}.`);
+  if(!r.cuadra) avisos.push(`Descuadre de ${eurS(r.desc)} (${r.desc>0?'sobra':'falta'} dinero).`);
+  if(r.billMal.length) avisos.push(`Billetes que no son múltiplo de su valor: ${r.billMal.join(', ')} €.`);
+  if(hist[st.fecha]) avisos.push(`Ya hay un cierre guardado del ${fechaCorta(st.fecha)}: se SOBRESCRIBIRÁ.`);
+  if(!confirm(`Cerrar caja del ${fechaLarga(st.fecha)}?\n\nEsperado: ${eur(r.esperado)}\nContado: ${eur(r.contado)}\nDescuadre: ${eurS(r.desc)}`+
+    (avisos.length?'\n\n⚠ '+avisos.join('\n⚠ '):''))) return;
+  // Guardamos solo las filas con datos (las vacías se descartan también en el historial)
+  const limpio=JSON.parse(JSON.stringify(st));
+  limpio.repN=limpio.repN.filter(repTiene); limpio.perN=limpio.perN.filter(horTiene);
+  Object.keys(limpio.rep).forEach(n=>{if(!limpio.repN.includes(n)) delete limpio.rep[n];});
+  Object.keys(limpio.hor).forEach(n=>{if(!limpio.perN.includes(n)) delete limpio.hor[n];});
+  const reg={fecha:st.fecha, st:limpio, headers, values, detalle,
+    resumen:{esperado:r.esperado, contado:r.contado, desc:r.desc, cuadra:r.cuadra, horas:r.horas},
+    ts:Date.now(), enviado:false};
+  hist[st.fecha]=reg; await dbSet('cierres',hist);
+  st=vacio(); await dbSet('current',st); render(); pintarHist();
+  await enviar(reg,true);
+}
+async function enviar(reg,avisar){
+  const url=cfg.url();
+  if(!url){ if(avisar) toast('Cierre guardado en la tablet ✅ (sin URL de Drive: configúrala en ⚙)',5000); return false; }
+  if(avisar) toast('Guardado ✅ · enviando a Drive…',8000);
+  try{
+    // text/plain evita el "preflight" CORS de Apps Script
+    const res=await fetch(url,{method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({token:TOKEN, fecha:reg.fecha, headers:reg.headers, values:reg.values, detalle:reg.detalle||[]})});
+    const j=await res.json().catch(()=>null);
+    if(!j||!j.ok) throw new Error((j&&j.error)||'respuesta no válida');
+    reg.enviado=true; reg.link=j.link||''; hist[reg.fecha]=reg; await dbSet('cierres',hist); pintarHist();
+    if(avisar) toast(`Cierre enviado a Drive ✅ (${j.accion||'guardado'})`+(j.link?` · <a href="${j.link}" target="_blank">abrir hoja</a>`:''),7000);
+    return true;
+  }catch(e){
+    if(avisar) toast('Guardado en la tablet, pero NO se pudo enviar ('+esc(e.message)+'). Se reintentará; también desde Historial.',7000);
+    return false;
+  }
+}
+async function reintentarPendientes(){
+  if(!cfg.url()) return;
+  for(const reg of Object.values(hist).filter(x=>!x.enviado)) await enviar(reg,false);
+}
+
+/* ---------- Historial ---------- */
+function pintarHist(){
+  const regs=Object.values(hist).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,60);
+  const box=document.getElementById('histBox');
+  if(!regs.length){box.innerHTML='<div class="vacio">Todavía no hay cierres guardados.</div>'; return;}
+  box.innerHTML=`<table class="hist"><thead><tr><th>Fecha</th><th>Esperado</th><th>Contado</th><th>Descuadre</th><th>Horas</th><th style="text-align:center">Drive</th><th></th></tr></thead><tbody>`+
+    regs.map(x=>{const s=x.resumen;
+      return `<tr><td><b>${fechaCorta(x.fecha)}</b><br><small style="color:var(--mut)">${fechaLarga(x.fecha)}</small></td>
+      <td class="r">${eur(s.esperado)}</td><td class="r">${eur(s.contado)}</td>
+      <td class="r" style="font-weight:700;color:${s.cuadra?'var(--verde)':'var(--rojo)'}">${eurS(s.desc)}</td>
+      <td class="r">${fmtH(s.horas)}</td>
+      <td style="text-align:center">${x.enviado?(x.link?`<a class="estado env" href="${esc(x.link)}" target="_blank">✓ enviado</a>`:'<span class="estado env">✓ enviado</span>'):'<span class="estado pend">⏳ pendiente</span>'}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="mini" data-abre="${x.fecha}">Abrir</button>
+        ${x.enviado?'':`<button class="mini prim" data-reenvia="${x.fecha}">Enviar</button>`}</td></tr>`;}).join('')+'</tbody></table>';
+}
+function csvCell(s){s=(s??'').toString(); return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+function descargarCSV(){
+  const regs=Object.values(hist).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if(!regs.length){toast('No hay cierres.'); return;}
+  const cab=[]; regs.forEach(x=>x.headers.forEach(h=>{if(!cab.includes(h)) cab.push(h);}));
+  const filas=[cab].concat(regs.map(x=>cab.map(h=>{const i=x.headers.indexOf(h); return i<0?'':x.values[i];})));
+  const blob=new Blob(['﻿'+filas.map(f=>f.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Cierres de caja.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
+/* ---------- Ajustes ---------- */
+function abrirCfg(){
+  document.getElementById('cfRep').value=cfg.rep().join('\n');
+  document.getElementById('cfPer').value=cfg.per().join('\n');
+  document.getElementById('cfTol').value=cfg.tol();
+  document.getElementById('cfURL').value=cfg.url();
+  document.getElementById('mCfg').classList.add('on');
+}
+function guardarCfg(){
+  const lin=id=>[...new Set(document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean))];
+  const rep=lin('cfRep'), per=lin('cfPer'), antR=cfg.rep(), antP=cfg.per();
+  const tol=document.getElementById('cfTol').value.trim();
+  if(cents(tol)===null){toast('Tolerancia no válida'); return;}
+  localStorage.setItem('cajaRep',JSON.stringify(rep.length?rep:REP_DEF));
+  localStorage.setItem('cajaPer',JSON.stringify(per.length?per:PER_DEF));
+  localStorage.setItem('cajaTol',tol);
+  localStorage.setItem('cajaURL',document.getElementById('cfURL').value.trim());
+  // La hoja de esta noche sigue a la lista fija: altas nuevas entran; bajas salen si no tienen datos
+  const sync=(noche,ant,nue,tiene)=>{nue.filter(n=>!ant.includes(n)&&!noche.includes(n)).forEach(n=>noche.push(n));
+    ant.filter(n=>!nue.includes(n)&&!tiene(n)).forEach(n=>{const i=noche.indexOf(n); if(i>=0) noche.splice(i,1);});};
+  sync(st.repN,antR,cfg.rep(),repTiene); sync(st.perN,antP,cfg.per(),horTiene); guardar();
+  document.getElementById('mCfg').classList.remove('on');
+  render(); toast('Ajustes guardados ✅'); reintentarPendientes();
+}
+
+/* ---------- Añadir / quitar personas desde la pantalla del cierre ---------- */
+const LS_FIJO={rep:'cajaRep', hor:'cajaPer'};
+const fijos=t=>t==='rep'?cfg.rep():cfg.per();
+const nocheDe=t=>t==='rep'?st.repN:st.perN;
+function anadir(tipo,fijo){
+  const el=document.getElementById('add-'+tipo); let n=(el.value||'').trim().replace(/\s+/g,' ');
+  if(!n){el.focus(); toast('Escribe un nombre'); return;}
+  const ya=conocidos().find(x=>x.toLowerCase()===n.toLowerCase()); if(ya) n=ya;   // respeta cómo ya estaba escrito
+  const l=nocheDe(tipo);
+  if(l.some(x=>x.toLowerCase()===n.toLowerCase())){toast(`${esc(n)} ya está en la lista`); return;}
+  l.push(n);
+  if(fijo){const f=fijos(tipo); if(!f.includes(n)){f.push(n); localStorage.setItem(LS_FIJO[tipo],JSON.stringify(f));}}
+  guardar(); render();
+  toast(`${esc(n)} añadido${fijo?' (también a la lista fija)':' solo a esta noche'}`);
+  const campo=document.querySelector(tipo==='rep'?`input[data-k="${CSS.escape(`rep|${n}|P`)}"]`:`input[data-k="${CSS.escape(`hor|${n}|e`)}"]`);
+  if(campo) campo.focus();
+}
+let qPend=null;
+function pedirQuitar(tipo,n){
+  const conDatos=tipo==='rep'?repTiene(n):horTiene(n), esFijo=fijos(tipo).includes(n);
+  if(!esFijo&&!conDatos){quitar(tipo,n,false); return;}   // añadido hoy y vacío: sin preguntar
+  qPend={tipo,n};
+  document.getElementById('mqTit').textContent=`¿Quitar a ${n}?`;
+  document.getElementById('mqTxt').textContent=(conDatos?'Tiene datos apuntados esta noche y se borrarán. ':'')+
+    (esFijo?'Está en la lista fija: puedes quitar a esta persona solo de hoy o también de la lista fija (ya no saldrá las próximas noches).':'');
+  document.getElementById('mqFijo').style.display=esFijo?'':'none';
+  document.getElementById('mQuitar').classList.add('on');
+}
+function quitar(tipo,n,tambienFijo){
+  const l=nocheDe(tipo), i=l.indexOf(n); if(i>=0) l.splice(i,1);
+  delete (tipo==='rep'?st.rep:st.hor)[n];
+  if(tambienFijo) localStorage.setItem(LS_FIJO[tipo],JSON.stringify(fijos(tipo).filter(x=>x!==n)));
+  guardar(); render(); toast(`${esc(n)} quitado${tambienFijo?' (también de la lista fija)':' de esta noche'}`);
+}
+document.getElementById('mqHoy').addEventListener('click',()=>{document.getElementById('mQuitar').classList.remove('on'); if(qPend) quitar(qPend.tipo,qPend.n,false); qPend=null;});
+document.getElementById('mqFijo').addEventListener('click',()=>{document.getElementById('mQuitar').classList.remove('on'); if(qPend) quitar(qPend.tipo,qPend.n,true); qPend=null;});
+document.getElementById('mqNo').addEventListener('click',()=>{document.getElementById('mQuitar').classList.remove('on'); qPend=null;});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id&&e.target.id.startsWith('add-')){e.preventDefault(); anadir(e.target.id.slice(4),false);}});
+
+/* ---------- Toast ---------- */
+let tT;
+function toast(html,ms=2600){const t=document.getElementById('toast'); t.innerHTML=html;
+  t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),ms);}
+
+/* ---------- Eventos ---------- */
+document.addEventListener('input',e=>{const el=e.target;
+  if(el.dataset&&el.dataset.k){set(el.dataset.k,el.value); recalc(); guardar();}
+  else if(el.id==='notas'){st.notas=el.value; guardar();}});
+document.addEventListener('focusin',e=>{if(e.target.matches('input.num')) setTimeout(()=>e.target.select(),0);});
+document.addEventListener('click',async e=>{const b=e.target.closest('button,[data-tab]'); if(!b) return;
+  if(b.dataset.tab){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.tab)); window.scrollTo(0,0);}
+  else if(b.dataset.copia){set(b.dataset.copia,String(b.dataset.v).replace('.',',')); render(); guardar();}
+  else if(b.dataset.quita){pedirQuitar(b.dataset.quita,b.dataset.n);}
+  else if(b.dataset.add){anadir(b.dataset.add,b.dataset.fijo==='1');}
+  else if(b.dataset.abre){const x=hist[b.dataset.abre];
+    if(confirm(`¿Abrir el cierre del ${fechaCorta(x.fecha)} para revisarlo o corregirlo?\n(Se sustituye la hoja que tengas ahora a medias.)`)){
+      st=normalizar(JSON.parse(JSON.stringify(x.st))); await dbSet('current',st); render();
+      document.querySelector('[data-tab="rep"]').click(); toast('Cierre abierto. Si cambias algo, vuelve a pulsar Cerrar caja.',4000);}}
+  else if(b.dataset.reenvia){await enviar(hist[b.dataset.reenvia],true);}
+});
+document.getElementById('fecha').addEventListener('change',e=>{st.fecha=e.target.value||fechaDefecto(); recalc(); guardar();});
+document.getElementById('bCerrar').addEventListener('click',cerrarCaja);
+document.getElementById('bNueva').addEventListener('click',()=>{
+  if(confirm('¿Vaciar la hoja actual? (los cierres ya guardados no se tocan)')){st=vacio(); guardar(); render(); toast('Hoja vaciada');}});
+document.getElementById('bCSV').addEventListener('click',descargarCSV);
+document.getElementById('cfg').addEventListener('click',abrirCfg);
+document.getElementById('cfCancel').addEventListener('click',()=>document.getElementById('mCfg').classList.remove('on'));
+document.getElementById('cfOk').addEventListener('click',guardarCfg);
+window.addEventListener('online',reintentarPendientes);
+
+async function cargar(){
+  hist=(await dbGet('cierres'))||{};
+  const cur=await dbGet('current');
+  if(cur&&cur.fecha){st=Object.assign(vacio(cur.fecha),normalizar(cur));
+    if(cur.fecha!==fechaDefecto()) setTimeout(()=>toast(`Ojo: tienes abierta la hoja del ${fechaCorta(cur.fecha)} (sin cerrar)`,5000),400);}
+  render(); pintarHist(); reintentarPendientes();
+}
+cargar();
+</script>
+</body>
+</html>
